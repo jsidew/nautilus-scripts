@@ -1,0 +1,49 @@
+#!/usr/bin/php -Cq
+#
+# Install me (copy + paste) locally under ~/.gnome2/nautilus-script/
+<?php
+
+$argumentOne = $argv[1];
+$argumentTwo = $argv[2];
+
+if (strpos($argumentOne, ':') === false) {
+    $argumentOne .= ':';
+    $argumentOne .= exec('zenity --entry --title="File splitter" --text="How many smaller files do you want to split this file into?"');
+}
+
+list($fname, $chunk) = explode(':', $argumentOne);
+$header = false;
+if (isset($argumentTwo)) {
+    $header = true;
+} elseif(exec('zenity --question --text="Do you want to preserve the first line for all the files?"; echo $?') === "0") {
+    $header = true;
+}
+
+
+if (!$fname) {
+    fwrite(STDOUT, "Arguments supported: filename:number_of_files header\nnumber_of_files is the number of smaller files to split into\nheader is optional (first line treated as header for all files).\n");
+}
+
+$f = file($fname);
+if (!$chunk) {
+    $chunk = 1000;
+} else {
+    $chunk = (int)ceil(count($f) / $chunk);
+}
+if ($header) {
+    $header = array_shift($f);
+}
+$n = count($f);
+$lines = '';
+$iFile = 1;
+for ($i = 0; $i < $n; $i++) {
+    $lines .= "{$f[$i]}";
+    if ((($i+1) % $chunk) === 0 || ($i+1) === $n) {
+        $ff = fopen(preg_replace('@(\.[^\.]+)$@', "_{$iFile}\\1", $fname), 'w');
+        if ($header) $lines = "{$header}{$lines}";
+        fwrite($ff, $lines);
+        fclose($ff);
+        $iFile++;
+        $lines = '';
+    }
+}
