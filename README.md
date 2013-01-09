@@ -1,4 +1,4 @@
 nautilus-scripts
 ================
 
-a collection of scripts intended for nautilus
+A collection of scripts intended for nautilus.
